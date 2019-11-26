@@ -1,3 +1,4 @@
+import csv
 import datetime
 
 from networkx import connected_components
@@ -85,14 +86,7 @@ def print_subgraphs(subgraphs):
         plt.show()
 
 
-if __name__ == "__main__":
-    print_message("Loading data")
-    # users = read_data_from_file("processed_users.csv")
-    users = read_data_from_file("processed_users2.csv")
-    # users = read_data_from_file("data.csv")
-
-    print_message(str(len(users)) + " users created")
-
+def print_graph_using_networkx(users):
     # print_message("Creating labels for graph")
     # labels = create_labels(users)
     print_message("Creating graph")
@@ -108,3 +102,56 @@ if __name__ == "__main__":
     plt.savefig('results.png')
     plt.show()
 
+
+def create_file_with_nodes(users, filename):
+    with open(filename + '.csv', 'w') as nodesFile:
+        writer = csv.writer(nodesFile, lineterminator='\n', delimiter=';', skipinitialspace=True)
+        writer.writerow(['Id', 'Label'])
+        for user in users:
+            writer.writerow([user.id, user.username])
+    nodesFile.close()
+
+
+def create_file_with_edges(users, filename):
+    with open(filename + '.csv', 'w') as edgesFile:
+        writer = csv.writer(edgesFile, lineterminator='\n', delimiter=';', skipinitialspace=True)
+        writer.writerow(['Source', 'Target'])
+        for user in users:
+            for follower in user.followers:
+                writer.writerow([user.id, follower])
+    edgesFile.close()
+
+
+def remove_not_imported_followers():
+    user_ids = []
+    for user in users:
+        user_ids.append(user.id)
+    for i, user in enumerate(users):
+        if i % 1000 == 0:
+            print("Parsing " + str(i) + " user")
+        new_followers = []
+        for follower in user.followers:
+            if follower in user_ids:
+                new_followers.append(follower)
+                # user.followers.remove(follower)
+        user.followers = new_followers
+
+
+if __name__ == "__main__":
+    print_message("Loading data")
+    # users = read_data_from_file("processed_users.csv")
+    # users = read_data_from_file("processed_users2.csv")
+    users = read_data_from_file("data.csv")
+
+    print_message(str(len(users)) + " users created")
+
+    # print_graph_using_networkx(users)
+
+    print_message("Removing not imported followers")
+    remove_not_imported_followers()
+
+    print_message("Creating file with nodes")
+    create_file_with_nodes(users, 'nodes')
+
+    print_message("Creating file with edges")
+    create_file_with_edges(users, 'edges')
