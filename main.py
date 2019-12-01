@@ -1,5 +1,6 @@
 import csv
 import datetime
+import os
 
 from networkx import connected_components
 
@@ -61,9 +62,12 @@ def create_labels(users):
     return labels
 
 
-def read_data_from_file(filename):
+def read_data_from_file(filename, is_test):
     users = []
-    file = open(filename, "r")
+    path = 'data'
+    if is_test:
+        path += '\\test'
+    file = open(os.path.join(path, filename), "r")
     for i, line in enumerate(file):
         if i % 1000 == 0:
             print("Reading " + str(i) + " line")
@@ -104,7 +108,7 @@ def print_graph_using_networkx(users):
 
 
 def create_file_with_nodes(users, filename):
-    with open(filename + '.csv', 'w') as nodesFile:
+    with open(os.path.join('results', filename + '.csv'), 'w') as nodesFile:
         writer = csv.writer(nodesFile, lineterminator='\n', delimiter=';', skipinitialspace=True)
         writer.writerow(['Id', 'Label'])
         for user in users:
@@ -113,7 +117,7 @@ def create_file_with_nodes(users, filename):
 
 
 def create_file_with_edges(users, filename):
-    with open(filename + '.csv', 'w') as edgesFile:
+    with open(os.path.join('results', filename + '.csv'), 'w') as edgesFile:
         writer = csv.writer(edgesFile, lineterminator='\n', delimiter=';', skipinitialspace=True)
         writer.writerow(['Source', 'Target'])
         for user in users:
@@ -122,7 +126,7 @@ def create_file_with_edges(users, filename):
     edgesFile.close()
 
 
-def remove_not_imported_followers():
+def remove_not_imported_followers(users):
     user_ids = []
     for user in users:
         user_ids.append(user.id)
@@ -137,21 +141,25 @@ def remove_not_imported_followers():
         user.followers = new_followers
 
 
-if __name__ == "__main__":
+def crete_whole_graph():
     print_message("Loading data")
-    # users = read_data_from_file("processed_users.csv")
-    # users = read_data_from_file("processed_users2.csv")
-    users = read_data_from_file("data.csv")
+    # users = read_data_from_file("processed_users.csv", False)
+    # users = read_data_from_file("processed_users2.csv", True)
+    users = read_data_from_file("data.csv", True)
 
     print_message(str(len(users)) + " users created")
 
     # print_graph_using_networkx(users)
 
     print_message("Removing not imported followers")
-    remove_not_imported_followers()
+    remove_not_imported_followers(users)
 
     print_message("Creating file with nodes")
     create_file_with_nodes(users, 'nodes')
 
     print_message("Creating file with edges")
     create_file_with_edges(users, 'edges')
+
+
+if __name__ == "__main__":
+    crete_whole_graph()
