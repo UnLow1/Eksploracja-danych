@@ -5,7 +5,6 @@ import os
 from networkx import connected_components
 
 from User import User
-import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -62,7 +61,7 @@ def create_labels(users):
     return labels
 
 
-def read_data_from_file(filename, is_test):
+def read_data_from_file(filename, is_test, only_these_users):
     users = []
     path = 'data'
     if is_test:
@@ -72,11 +71,27 @@ def read_data_from_file(filename, is_test):
         if i % 1000 == 0:
             print("Reading " + str(i) + " line")
         user_data = line.strip().split(';')
-        if len(user_data[2]) > 0:
-            followers = user_data[2].split(',')
+        user_id = user_data[0]
+        if only_these_users:
+            if user_id in only_these_users:
+                if len(user_data[2]) > 0:
+                    followers = user_data[2].split(',')
+                else:
+                    followers = []
+                users.append(User(user_id, user_data[1], followers))
+                print("1) users = " + str(len(users)))
+            elif len(user_data[2]) > 0:
+                followers = user_data[2].split(',')
+                for user in only_these_users:
+                    if user in followers:
+                        users.append(User(user_id, user_data[1], followers))
+                        print("2) users = " + str(len(users)))
         else:
-            followers = []
-        users.append(User(user_data[0], user_data[1], followers))
+            if len(user_data[2]) > 0:
+                followers = user_data[2].split(',')
+            else:
+                followers = []
+            users.append(User(user_id, user_data[1], followers))
     return users
 
 
@@ -143,9 +158,9 @@ def remove_not_imported_followers(users):
 
 def crete_whole_graph():
     print_message("Loading data")
-    # users = read_data_from_file("processed_users.csv", False)
-    # users = read_data_from_file("processed_users2.csv", True)
-    users = read_data_from_file("data.csv", True)
+    # users = read_data_from_file("processed_users.csv", False, None)
+    # users = read_data_from_file("processed_users2.csv", True, None)
+    users = read_data_from_file("data.csv", True, None)
 
     print_message(str(len(users)) + " users created")
 
@@ -161,5 +176,27 @@ def crete_whole_graph():
     create_file_with_edges(users, 'edges')
 
 
+def read_group(group_id, is_test):
+    path = 'data'
+    if is_test:
+        path += '\\test'
+    with open(os.path.join(path, 'clusters_label_propagation' + '.csv'), 'r') as file:
+        for line in file:
+            id = line.strip().split(';')[0]
+            if int(id) == group_id:
+                return line.strip().split(';')[1].split(',')
+
+
 if __name__ == "__main__":
-    crete_whole_graph()
+    group_id = 108
+
+    user_ids = read_group(group_id, False)
+    users = read_data_from_file("data3.csv", False, user_ids)
+
+    print_message("Creating file with nodes")
+    create_file_with_nodes(users, 'nodes')
+
+    print_message("Creating file with edges")
+    create_file_with_edges(users, 'edges')
+
+    # crete_whole_graph()
