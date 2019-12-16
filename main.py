@@ -1,6 +1,7 @@
 import csv
 import datetime
 import os
+import sys
 
 from networkx import connected_components
 
@@ -79,13 +80,13 @@ def read_data_from_file(filename, is_test, only_these_users):
                 else:
                     followers = []
                 users.append(User(user_id, user_data[1], followers))
-                print("1) users = " + str(len(users)))
+                # print("len(users) = " + str(len(users)))
             elif len(user_data[2]) > 0:
                 followers = user_data[2].split(',')
                 for user in only_these_users:
                     if user in followers:
                         users.append(User(user_id, user_data[1], followers))
-                        print("2) users = " + str(len(users)))
+                        # print("len(users) = " + str(len(users)))
         else:
             if len(user_data[2]) > 0:
                 followers = user_data[2].split(',')
@@ -180,23 +181,37 @@ def read_group(group_id, is_test):
     path = 'data'
     if is_test:
         path += '\\test'
-    with open(os.path.join(path, 'clusters_label_propagation' + '.csv'), 'r') as file:
+    with open(os.path.join(path, 'clusters' + '.csv'), 'r') as file:
         for line in file:
             id = line.strip().split(';')[0]
             if int(id) == group_id:
                 return line.strip().split(';')[1].split(',')
 
 
+def read_groups(is_test):
+    result = {}
+    path = 'data'
+    if is_test:
+        path += '\\test'
+    with open(os.path.join(path, 'clusters' + '.csv'), 'r') as file:
+        for line in file:
+            id = line.strip().split(';')[0]
+            result[id] = line.strip().split(';')[1].split(',')
+    return result
+
+
 if __name__ == "__main__":
-    group_id = 108
+    # group_ids = [1, 3] # all 166
+    group_id = int(sys.argv[1])
 
     user_ids = read_group(group_id, False)
-    users = read_data_from_file("data3.csv", False, user_ids)
+    # groups_with_users_map = read_groups(False)
+    users = read_data_from_file("data.csv", False, user_ids)
 
     print_message("Creating file with nodes")
-    create_file_with_nodes(users, 'nodes')
+    create_file_with_nodes(users, 'nodes' + str(group_id))
 
     print_message("Creating file with edges")
-    create_file_with_edges(users, 'edges')
+    create_file_with_edges(users, 'edges' + str(group_id))
 
     # crete_whole_graph()
